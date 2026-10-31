@@ -6,12 +6,34 @@ on:
       target_url:
         description: "URL to download"
         required: true
+      upload_to_release:
+        description: "Upload downloaded file to GitHub Release?"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      release_tag:
+        description: "Release tag name (only used if upload_to_release=true)"
+        required: false
+        default: "firmware-release"
+      release_name:
+        description: "Release name (only used if upload_to_release=true)"
+        required: false
+        default: "Firmware Release"
 
 jobs:
   download-url:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
     env:
       TARGET_URL: ${{ github.event.inputs.target_url }}
+      UPLOAD_TO_RELEASE: ${{ github.event.inputs.upload_to_release }}
+      RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+      RELEASE_NAME: ${{ github.event.inputs.release_name }}
 
     steps:
       - name: Download file with original name
@@ -25,8 +47,18 @@ jobs:
         run: |
           ls -lh artifacts
 
-      - name: Upload artifact
+      - name: Upload as GitHub Actions artifact
         uses: actions/upload-artifact@v4
         with:
           name: downloaded-file
           path: artifacts/*
+
+      - name: Upload to GitHub Release
+        if: ${{ env.UPLOAD_TO_RELEASE == 'true' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_NAME }}
+          files: artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
