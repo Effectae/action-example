@@ -1,0 +1,27 @@
+name: Download firmware ZIP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  download-firmware:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download the firmware ZIP
+        run: |
+          mkdir -p artifacts
+          curl -L --fail --retry 3 \
+            -o artifacts/TB320FC_ROW_OPEN_USER_Q00031.0_V_ZUI_17.0.356_ST_260601.zip \
+            "https://mirrors.lolinet.com/firmware/lenowow/2023/Y700_2023/TB320FC/TB320FC_ROW_OPEN_USER_Q00031.0_V_ZUI_17.0.356_ST_260601.zip"
+
+      - name: Show file details
+        run: |
+          ls -lh artifacts
+          unzip -l artifacts/*.zip | head
+
+      - name: Upload as GitHub Actions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tb320fc-firmware
+          path: artifacts/*.zip
