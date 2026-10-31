@@ -1,27 +1,32 @@
-name: Download firmware ZIP
+name: Download URL Artifact
 
 on:
   workflow_dispatch:
+    inputs:
+      target_url:
+        description: "URL to download"
+        required: true
 
 jobs:
-  download-firmware:
+  download-url:
     runs-on: ubuntu-latest
+    env:
+      TARGET_URL: ${{ github.event.inputs.target_url }}
 
     steps:
-      - name: Download the firmware ZIP
+      - name: Download file with original name
         run: |
           mkdir -p artifacts
-          curl -L --fail --retry 3 \
-            -o artifacts/TB320FC_ROW_OPEN_USER_Q00031.0_V_ZUI_17.0.356_ST_260601.zip \
-            "https://mirrors.lolinet.com/firmware/lenowow/2023/Y700_2023/TB320FC/TB320FC_ROW_OPEN_USER_Q00031.0_V_ZUI_17.0.356_ST_260601.zip"
+          filename=$(basename "$TARGET_URL")
+          echo "filename=$filename"
+          curl -L --fail --retry 3 -o "artifacts/$filename" "$TARGET_URL"
 
       - name: Show file details
         run: |
           ls -lh artifacts
-          unzip -l artifacts/*.zip | head
 
-      - name: Upload as GitHub Actions artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tb320fc-firmware
-          path: artifacts/*.zip
+          name: downloaded-file
+          path: artifacts/*
